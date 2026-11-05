@@ -58,8 +58,10 @@ export function computeOffices(houses, elected = null) {
   { const p = pick([E.vice])[0]; if (p) { set(p, 1); H.vp = p; } else { const q = usa.find(o => !taken.has(o)); if (q) { set(q, 1); H.vp = q; } } }
   const nSen = SEATS.senators(houses.length); H.seats.senators = nSen;
   for (const o of pick(E.senators)) { if (H.senators.length >= nSen) break; set(o, 2); H.senators.push(o); }
+  // eleitos governadores têm prioridade sobre senadores sorteados para completar vagas (senão o vencedor era 'tomado' e outro assumia)
+  for (const [st, l] of byState) { if (l.length < OPEN.governor) continue; const g = pick([E.governors?.[st]])[0]; if (g) { set(g, 3); H.governors.set(st, g); } }
   for (const o of usa) { if (H.senators.length >= nSen) break; if (!taken.has(o)) { set(o, 2); H.senators.push(o); } }
-  for (const [st, l] of byState) { if (l.length < OPEN.governor) continue; const g = pick([E.governors?.[st]])[0] ?? l.find(o => !taken.has(o)); if (g) { set(g, 3); H.governors.set(st, g); } }
+  for (const [st, l] of byState) { if (l.length < OPEN.governor) continue; if (H.governors.has(st)) continue; const g = l.find(o => !taken.has(o)); if (g) { set(g, 3); H.governors.set(st, g); } }
   for (const [st, l] of byState) { const n = SEATS.reps(st, l.length), r = []; for (const o of pick(E.reps?.[st])) { if (r.length >= n) break; set(o, 4); r.push(o); } for (const o of l) { if (r.length >= n) break; if (!taken.has(o)) { set(o, 4); r.push(o); } } H.reps.set(st, r); }
   // prefeito: quem escolheu a cidade vem antes de quem foi sorteado nela (prov)
   for (const [k, l] of byCity) { if (l.length < OPEN.mayor) continue; const m = pick([E.mayors?.[k]])[0] ?? l.find(o => !taken.has(o) && !o.prov) ?? l.find(o => !taken.has(o)); if (m) { set(m, 5); H.mayors.set(k, m); } }
